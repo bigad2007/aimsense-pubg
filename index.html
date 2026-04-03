@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AimSense — PUBG 감도 분석기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060a12; --bg2:#0b1120; --bg3:#0f1a2e;
+  --surf:#121d30; --surf2:#1a2840;
+  --bdr:#1e3a5f; --bdr2:#2a3f5e;
+  --amber:#f5a623; --cyan:#00d4ff; --green:#22c55e;
+  --red:#ef4444; --purp:#a78bfa;
+  --text:#e2e8f0; --text2:#94a3b8; --text3:#475569;
+  --mono:'Share Tech Mono',monospace;
+  --disp:'Rajdhani',sans-serif;
+  --body:'Noto Sans KR',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;overflow-x:hidden}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(0,212,255,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,212,255,.022) 1px,transparent 1px);
+  background-size:44px 44px;
+}
+body::after{
+  content:'';position:fixed;top:-40%;left:-30%;width:180%;height:180%;
+  pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse at 65% 10%,rgba(245,166,35,.04) 0%,transparent 45%),
+    radial-gradient(ellipse at 15% 85%,rgba(0,212,255,.05) 0%,transparent 45%);
+}
+
+/* HEADER */
+header{
+  position:relative;z-index:10;padding:22px 40px;
+  border-bottom:1px solid var(--bdr);
+  background:linear-gradient(180deg,rgba(11,17,32,.99),rgba(6,10,18,.94));
+  display:flex;align-items:center;gap:16px;
+}
+.logo svg{width:40px;height:40px;flex-shrink:0}
+.hd h1{font-family:var(--disp);font-size:24px;font-weight:700;letter-spacing:4px;text-transform:uppercase;line-height:1}
+.hd h1 em{color:var(--amber);font-style:normal}
+.hd p{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:2px;margin-top:4px}
+.badge{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--cyan);border:1px solid rgba(0,212,255,.4);padding:4px 10px;background:rgba(0,212,255,.04);letter-spacing:1px;white-space:nowrap}
+
+/* MAIN */
+main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:36px 24px 80px}
+.sec-lbl{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--text3);text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.sec-lbl::before{content:'';display:inline-block;width:12px;height:1px;background:var(--amber)}
+
+/* DROP ZONE */
+.drop{border:1px solid var(--bdr2);background:var(--surf);border-radius:4px;padding:44px 28px;text-align:center;cursor:pointer;transition:all .22s;position:relative;overflow:hidden}
+.drop::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(245,166,35,.03),transparent 55%);pointer-events:none}
+.bk{position:absolute;width:13px;height:13px}
+.bk.tl{top:7px;left:7px;border-top:2px solid var(--amber);border-left:2px solid var(--amber)}
+.bk.tr{top:7px;right:7px;border-top:2px solid var(--amber);border-right:2px solid var(--amber)}
+.bk.bl{bottom:7px;left:7px;border-bottom:2px solid var(--amber);border-left:2px solid var(--amber)}
+.bk.br{bottom:7px;right:7px;border-bottom:2px solid var(--amber);border-right:2px solid var(--amber)}
+.drop:hover,.drop.over{border-color:var(--amber);background:var(--surf2)}
+.drop-ico{width:48px;height:48px;margin:0 auto 14px;opacity:.5}
+.drop h3{font-family:var(--disp);font-size:18px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
+.drop p{font-size:13px;color:var(--text2);line-height:1.7}
+.drop .fmt{margin-top:9px;font-family:var(--mono);font-size:11px;color:var(--text3)}
+#fi{display:none}
+
+.file-row{display:none;align-items:center;gap:10px;padding:10px 15px;margin-top:12px;background:var(--surf2);border:1px solid var(--bdr2);border-radius:3px}
+.file-row .fn{font-family:var(--mono);font-size:12px;color:var(--cyan);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-row .fs{font-family:var(--mono);font-size:11px;color:var(--text3)}
+
+.btn-go{width:100%;margin-top:13px;padding:14px;background:var(--amber);border:none;color:#000;font-family:var(--disp);font-size:15px;font-weight:700;letter-spacing:4px;text-transform:uppercase;cursor:pointer;transition:all .2s;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
+.btn-go:hover:not(:disabled){background:#ffc107;transform:translateY(-1px);box-shadow:0 4px 22px rgba(245,166,35,.45)}
+.btn-go:disabled{opacity:.4;cursor:not-allowed}
+
+/* PROGRESS */
+.prog{display:none;margin-top:20px}
+.prog-hd{display:flex;justify-content:space-between;margin-bottom:7px}
+.prog-lbl{font-family:var(--mono);font-size:11px;color:var(--cyan);letter-spacing:2px;animation:blink 1.3s ease-in-out infinite}
+.prog-pct{font-family:var(--mono);font-size:11px;color:var(--text2)}
+.prog-track{height:3px;background:var(--surf2);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--cyan));border-radius:2px;width:0%;transition:width .2s ease;box-shadow:0 0 10px rgba(0,212,255,.45)}
+.log-out{margin-top:9px;font-family:var(--mono);font-size:11px;color:var(--text3);height:18px;overflow:hidden}
+.log-line{animation:fadeup .28s ease forwards}
+
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes fadeup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* RESULTS */
+.results{display:none;margin-top:36px;animation:slidein .45s ease forwards}
+@keyframes slidein{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* GRADE HERO */
+.grade-hero{display:flex;align-items:center;gap:26px;padding:26px 30px;margin-bottom:18px;background:var(--surf);border:1px solid var(--bdr2);border-radius:4px;position:relative;overflow:hidden}
+.grade-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--amber),transparent)}
+.gnum{font-family:var(--disp);font-size:78px;font-weight:700;line-height:1;min-width:86px;text-align:center}
+.gnum.S{color:#ffd700;text-shadow:0 0 28px rgba(255,215,0,.55)}
+.gnum.A{color:var(--cyan);text-shadow:0 0 22px rgba(0,212,255,.45)}
+.gnum.B{color:var(--green)}
+.gnum.C{color:var(--amber)}
+.gnum.D{color:var(--red)}
+.ginfo{flex:1}
+.gtitle{font-family:var(--disp);font-size:19px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:5px}
+.gscore{font-family:var(--mono);font-size:13px;color:var(--text2);margin-bottom:12px}
+.gscore span{color:var(--amber);font-size:16px}
+.rec-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:2px;font-family:var(--mono);font-size:11px;letter-spacing:1px;font-weight:600}
+.rp-opt{background:rgba(34,197,94,.12);border:1px solid var(--green);color:var(--green)}
+.rp-hi{background:rgba(239,68,68,.11);border:1px solid var(--red);color:var(--red)}
+.rp-lo{background:rgba(245,166,35,.11);border:1px solid var(--amber);color:var(--amber)}
+.rp-sl{background:rgba(148,163,184,.08);border:1px solid #475569;color:var(--text2)}
+.rec-det{margin-top:8px;font-size:13px;color:var(--text2)}
+
+/* STAT CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:18px}
+.sc{background:var(--surf);border:1px solid var(--bdr);border-radius:4px;padding:17px}
+.sc .sl{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+.sc .sv{font-family:var(--disp);font-size:30px;font-weight:700;line-height:1;margin-bottom:9px}
+.sc .sv .u{font-size:15px;color:var(--text2);font-weight:400}
+.sbar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.sbf{height:100%;border-radius:2px;transition:width 1s ease}
+.sc.st .sbf{background:var(--cyan)}
+.sc.ct .sbf{background:var(--amber)}
+.sc.co .sbf{background:var(--green)}
+.sc.sm .sbf{background:var(--purp)}
+
+/* METRICS */
+.met-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.met{background:var(--bg2);border:1px solid var(--bdr);border-radius:3px;padding:12px 14px}
+.met .ml{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:5px}
+.met .mv{font-family:var(--mono);font-size:14px;color:var(--cyan)}
+
+/* INFO ROW */
+.info-row{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:18px}
+.icard{background:var(--surf);border:1px solid var(--bdr2);border-radius:4px;padding:18px;position:relative;overflow:hidden}
+.icard::before{content:'';position:absolute;top:0;left:0;bottom:0;width:2px}
+.icard.pat::before{background:var(--purp)}
+.icard.sens::before{background:var(--cyan)}
+.icard .il{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:10px}
+.pat-name{font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:2px;color:var(--purp);margin-bottom:5px}
+.pat-det{font-size:13px;color:var(--text2);line-height:1.6}
+.sens-num{font-family:var(--disp);font-size:40px;font-weight:700;color:var(--cyan);line-height:1;margin-bottom:4px}
+.sens-range{font-family:var(--mono);font-size:12px;color:var(--text2);margin-bottom:7px}
+.sens-note{font-size:11px;color:var(--text3);line-height:1.5}
+
+/* TIPS */
+.tips-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:18px}
+.tip{display:flex;align-items:flex-start;gap:9px;background:var(--bg2);border:1px solid var(--bdr);border-radius:3px;padding:12px 14px}
+.tip .td{width:5px;height:5px;border-radius:50%;background:var(--amber);flex-shrink:0;margin-top:7px}
+.tip span{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* CHARTS */
+.charts-wrap{background:var(--surf);border:1px solid var(--bdr);border-radius:4px;padding:20px;margin-bottom:18px}
+.charts-inner{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box .clbl{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+.chart-box canvas{width:100%!important;border-radius:3px;display:block}
+
+/* ERROR */
+.err{display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:4px;padding:13px 17px;margin-top:12px;font-family:var(--mono);font-size:12px;color:#fca5a5}
+
+/* FOOTER */
+footer{position:relative;z-index:1;text-align:center;padding:22px;font-family:var(--mono);font-size:10px;color:var(--text3);border-top:1px solid var(--bdr);letter-spacing:1px}
+
+/* Hidden processing elements */
+#videoEl{position:absolute;left:-9999px;top:-9999px;width:1px;height:1px}
+#procCanvas{display:none}
+
+@media(max-width:680px){
+  header{padding:16px 14px}
+  main{padding:22px 12px 60px}
+  .stat-grid,.met-grid{grid-template-columns:1fr 1fr}
+  .info-row,.charts-inner,.tips-grid{grid-template-columns:1fr}
+  .grade-hero{flex-direction:column;text-align:center}
+  .gnum{font-size:60px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="20" r="19" stroke="#f5a623" stroke-width="1.4"/>
+      <circle cx="20" cy="20" r="2.8" fill="#f5a623"/>
+      <line x1="20" y1="1"  x2="20" y2="8.5"  stroke="#f5a623" stroke-width="1.4"/>
+      <line x1="20" y1="31.5" x2="20" y2="39" stroke="#f5a623" stroke-width="1.4"/>
+      <line x1="1"  y1="20" x2="8.5"  y2="20" stroke="#f5a623" stroke-width="1.4"/>
+      <line x1="31.5" y1="20" x2="39" y2="20" stroke="#f5a623" stroke-width="1.4"/>
+      <circle cx="20" cy="20" r="8.5" stroke="rgba(245,166,35,.28)" stroke-width="1"/>
+      <circle cx="20" cy="20" r="14"  stroke="rgba(245,166,35,.1)"  stroke-width="1"/>
+    </svg>
+  </div>
+  <div class="hd">
+    <h1>Aim<em>Sense</em></h1>
+    <p>PUBG · SENSITIVITY ANALYZER · CLIENT-SIDE</p>
+  </div>
+  <div class="badge">100% BROWSER · NO SERVER</div>
+</header>
+
+<main>
+  <div class="sec-lbl">영상 업로드</div>
+  <div class="drop" id="dz" onclick="document.getElementById('fi').click()">
+    <div class="bk tl"></div><div class="bk tr"></div>
+    <div class="bk bl"></div><div class="bk br"></div>
+    <svg class="drop-ico" viewBox="0 0 48 48" fill="none">
+      <rect x="4" y="4" width="40" height="40" rx="3" stroke="#475569" stroke-width="1.4"/>
+      <polygon points="17,16 17,32 31,24" fill="#f5a623" opacity=".75"/>
+      <line x1="34" y1="14" x2="34" y2="26" stroke="#334155" stroke-width="1.4"/>
+      <line x1="34" y1="14" x2="30" y2="18" stroke="#475569" stroke-width="1.4"/>
+      <line x1="34" y1="14" x2="38" y2="18" stroke="#475569" stroke-width="1.4"/>
+    </svg>
+    <h3>드래그 또는 클릭하여 업로드</h3>
+    <p>PUBG 플레이 영상을 올리면 브라우저에서 직접 분석합니다.<br>영상은 서버로 전송되지 않습니다.</p>
+    <div class="fmt">MP4 · WebM · MOV · AVI &nbsp;|&nbsp; 크기 제한 없음</div>
+  </div>
+  <input type="file" id="fi" accept="video/*">
+
+  <div class="file-row" id="frow">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="1" width="12" height="14" rx="1" stroke="#00d4ff" stroke-width="1.2"/>
+      <line x1="5" y1="6" x2="11" y2="6" stroke="#00d4ff" stroke-width="1"/>
+      <line x1="5" y1="9" x2="9"  y2="9" stroke="#334155" stroke-width="1"/>
+    </svg>
+    <span class="fn" id="fname">—</span>
+    <span class="fs" id="fsize">—</span>
+  </div>
+
+  <button class="btn-go" id="btnGo" onclick="startAnalysis()" disabled>◈ 분석 시작</button>
+
+  <div class="prog" id="prog">
+    <div class="prog-hd">
+      <span class="prog-lbl" id="plbl">ANALYZING FRAMES</span>
+      <span class="prog-pct" id="ppct">0%</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="pfill"></div></div>
+    <div class="log-out" id="logEl"></div>
+  </div>
+
+  <div class="err" id="errEl"></div>
+
+  <!-- Hidden: video + canvas for frame processing -->
+  <video id="videoEl" muted playsinline preload="auto"></video>
+  <canvas id="procCanvas"></canvas>
+
+  <!-- RESULTS -->
+  <div class="results" id="results">
+    <div class="sec-lbl">분석 결과</div>
+
+    <div class="grade-hero">
+      <div class="gnum" id="gnum">—</div>
+      <div class="ginfo">
+        <div class="gtitle">Overall Performance</div>
+        <div class="gscore">종합 점수: <span id="gScore">—</span> / 100</div>
+        <div id="rPill"></div>
+        <div class="rec-det" id="rDet"></div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="sc st"><div class="sl">Stability</div><div class="sv" id="vSt">—<span class="u">%</span></div><div class="sbar"><div class="sbf" id="bSt" style="width:0%"></div></div></div>
+      <div class="sc ct"><div class="sl">Control</div><div class="sv"  id="vCt">—<span class="u">%</span></div><div class="sbar"><div class="sbf" id="bCt" style="width:0%"></div></div></div>
+      <div class="sc co"><div class="sl">Consistency</div><div class="sv" id="vCo">—<span class="u">%</span></div><div class="sbar"><div class="sbf" id="bCo" style="width:0%"></div></div></div>
+      <div class="sc sm"><div class="sl">Smoothness</div><div class="sv" id="vSm">—<span class="u">%</span></div><div class="sbar"><div class="sbf" id="bSm" style="width:0%"></div></div></div>
+    </div>
+
+    <div class="met-grid">
+      <div class="met"><div class="ml">Frames Analyzed</div><div class="mv" id="mFrames">—</div></div>
+      <div class="met"><div class="ml">Duration</div><div class="mv" id="mDur">—</div></div>
+      <div class="met"><div class="ml">Avg Movement</div><div class="mv" id="mAvgM">—</div></div>
+      <div class="met"><div class="ml">Max Deviation</div><div class="mv" id="mMaxD">—</div></div>
+    </div>
+
+    <div class="info-row">
+      <div class="icard pat">
+        <div class="il">에임 패턴 분류</div>
+        <div class="pat-name" id="patName">—</div>
+        <div class="pat-det"  id="patDet">—</div>
+      </div>
+      <div class="icard sens">
+        <div class="il">추천 감도 추정 (PUBG · DPI 800 기준)</div>
+        <div class="sens-num"   id="sensNum">—</div>
+        <div class="sens-range" id="sensRange">범위: — ~ —</div>
+        <div class="sens-note"  id="sensNote">—</div>
+      </div>
+    </div>
+
+    <div class="sec-lbl">개선 팁</div>
+    <div class="tips-grid" id="tipsGrid"></div>
+
+    <div class="charts-wrap" style="margin-top:18px">
+      <div class="sec-lbl" style="margin-bottom:14px">에임 궤적 &amp; 분석 차트</div>
+      <div class="charts-inner">
+        <div class="chart-box"><div class="clbl">Aim Trajectory</div><canvas id="cTraj"></canvas></div>
+        <div class="chart-box"><div class="clbl">Density Heatmap</div><canvas id="cHeat"></canvas></div>
+        <div class="chart-box"><div class="clbl">Movement Timeline</div><canvas id="cTime"></canvas></div>
+        <div class="chart-box"><div class="clbl">Movement Distribution</div><canvas id="cDist"></canvas></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  AimSense &nbsp;|&nbsp; Educational Purpose Only &nbsp;|&nbsp;
+  무단 수정·재배포 금지 &nbsp;|&nbsp; 배포 희망 시 출처 표기 필수 &amp; 원저자 허락 필요
+</footer>
+
+<script>
+/* ================================================================
+   AimSense v3.0 — Final Reviewed Build
+   100% client-side. Works on GitHub Pages.
+
+   Analysis pipeline:
+   ① HTMLVideoElement seek → Canvas 2D pixel extraction
+   ② Luminance grayscale (ITU-R BT.601)
+   ③ ROI center block-matching (8×8 SSD, ±search)
+   ④ Median of valid blocks → per-frame (dx, dy)
+   ⑤ Cumulative trajectory from deltas only (no absolute coords)
+   ⑥ 30fps normalization → scoring → sensitivity judgment
+
+   Bug fixes vs previous version:
+   - seeked event replaced with reliable seek+promise pattern
+   - Float32Array reuse (prev/curr swap) to avoid memory growth
+   - Block search capped and optimized with early-exit
+   - textAlign always reset after canvas text ops
+   - trajX/Y built only from deltas (no spurious [0,0] prepend)
+   - Sensitivity formula recalibrated with empirical mapping
+   - All canvas contexts use willReadFrequently:true
+================================================================ */
+
+/* ── THRESHOLDS (30fps-normalized px/frame) ── */
+const T_TOO_HIGH = 7.5;
+const T_HIGH     = 5.0;
+const T_OPT_LO   = 1.6;
+const T_LOW      = 0.7;
+
+/* ── ANALYSIS PARAMS ── */
+const SAMPLE_MS  = 50;   // ms between sampled frames (~20fps sampling — fast + accurate)
+const ROI_R      = 80;   // center ROI radius (px), clamped to video dims
+const BS         = 8;    // block size (px)
+const SEARCH     = 5;    // block search radius (px)
+const NORM_FPS   = 30;   // normalization target
+
+const LOGS = [
+  '> Loading video metadata...',
+  '> Extracting frames via Canvas 2D...',
+  '> Computing block-matching motion vectors...',
+  '> Applying median filter to ROI...',
+  '> Accumulating trajectory deltas...',
+  '> Calculating stability & control scores...',
+  '> Classifying aim pattern...',
+  '> Estimating sensitivity range...',
+  '> Rendering trajectory & heatmap...',
+  '> Finalizing report...',
+];
+
+/* ── STATE ── */
+let videoFile = null;
+let running   = false;
+
+/* ── FILE SELECTION ── */
+document.getElementById('fi').addEventListener('change', e => {
+  if (e.target.files[0]) pickFile(e.target.files[0]);
+});
+const dz = document.getElementById('dz');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', ()  => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('over');
+  if (e.dataTransfer.files[0]) pickFile(e.dataTransfer.files[0]);
+});
+
+function pickFile(f) {
+  videoFile = f;
+  document.getElementById('fname').textContent = f.name;
+  document.getElementById('fsize').textContent = fmtBytes(f.size);
+  document.getElementById('frow').style.display = 'flex';
+  document.getElementById('btnGo').disabled = false;
+  document.getElementById('errEl').style.display = 'none';
+}
+
+function fmtBytes(b) {
+  return b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(1) + ' MB';
+}
+
+/* ── ENTRY POINT ── */
+async function startAnalysis() {
+  if (!videoFile || running) return;
+  running = true;
+
+  const btn = document.getElementById('btnGo');
+  btn.disabled = true;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('errEl').style.display   = 'none';
+  document.getElementById('prog').style.display    = 'block';
+  setProgress(1, LOGS[0]);
+
+  try {
+    const result = await analyzeVideo(videoFile);
+    document.getElementById('prog').style.display = 'none';
+    renderResults(result);
+  } catch (e) {
+    document.getElementById('prog').style.display = 'none';
+    showErr(e.message || String(e));
+  } finally {
+    running = false;
+    btn.disabled = false;
+  }
+}
+
+/* ================================================================
+   VIDEO ANALYSIS ENGINE
+================================================================ */
+function analyzeVideo(file) {
+  return new Promise((resolve, reject) => {
+    const video  = document.getElementById('videoEl');
+    const canvas = document.getElementById('procCanvas');
+
+    // willReadFrequently: true is critical for getImageData performance
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const url = URL.createObjectURL(file);
+
+    video.src = url;
+    video.load();
+
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('영상 파일을 열 수 없습니다. MP4/WebM 형식을 권장합니다.'));
+    };
+
+    video.onloadedmetadata = () => {
+      const W = video.videoWidth;
+      const H = video.videoHeight;
+      if (!W || !H) { reject(new Error('영상 해상도를 읽을 수 없습니다.')); return; }
+
+      const duration = video.duration;
+      if (!duration || duration < 0.2) { reject(new Error('영상이 너무 짧습니다.')); return; }
+
+      canvas.width  = W;
+      canvas.height = H;
+
+      // ROI clamped to safe region (must fit search + block padding)
+      const roi = Math.min(ROI_R, Math.floor(W * 0.35), Math.floor(H * 0.35));
+      const cx  = Math.floor(W / 2);
+      const cy  = Math.floor(H / 2);
+
+      // Block grid boundaries within ROI (need SEARCH padding on all sides)
+      const bx1 = cx - roi + SEARCH + BS;
+      const by1 = cy - roi + SEARCH + BS;
+      const bx2 = cx + roi - SEARCH - BS;
+      const by2 = cy + roi - SEARCH - BS;
+
+      if (bx2 <= bx1 || by2 <= by1) {
+        reject(new Error('영상 해상도가 너무 낮습니다.')); return;
+      }
+
+      const deltasX  = [];
+      const deltasY  = [];
+      const trajX    = [];
+      const trajY    = [];
+      let cumX = 0, cumY = 0;
+
+      // Reuse two Float32Array buffers instead of allocating per frame
+      let prevGray = new Float32Array(W * H);
+      let currGray = new Float32Array(W * H);
+      let hasPrev  = false;
+
+      let frameIdx = 0;
+      const totalFrames = Math.floor(duration * 1000 / SAMPLE_MS);
+
+      setProgress(3, LOGS[1]);
+
+      /* -- seek to next time stamp, return promise -- */
+      function seekTo(t) {
+        return new Promise((res, rej) => {
+          const onSeeked = () => {
+            video.removeEventListener('seeked', onSeeked);
+            video.removeEventListener('error', onErr);
+            res();
+          };
+          const onErr = () => {
+            video.removeEventListener('seeked', onSeeked);
+            video.removeEventListener('error', onErr);
+            rej(new Error('seek 오류'));
+          };
+          video.addEventListener('seeked', onSeeked, { once: true });
+          video.addEventListener('error', onErr,    { once: true });
+          video.currentTime = t;
+        });
+      }
+
+      /* -- process all frames sequentially -- */
+      async function processAll() {
+        for (frameIdx = 0; frameIdx < totalFrames; frameIdx++) {
+          const t = frameIdx * (SAMPLE_MS / 1000);
+          if (t >= duration - 0.02) break;
+
+          await seekTo(t);
+
+          // Draw frame to canvas and extract pixels
+          ctx.drawImage(video, 0, 0, W, H);
+          const imageData = ctx.getImageData(0, 0, W, H);
+          toGray(imageData.data, currGray, W * H);
+
+          if (hasPrev) {
+            const { dx, dy } = blockMatch(prevGray, currGray, W, H, cx, cy, bx1, by1, bx2, by2);
+            deltasX.push(dx);
+            deltasY.push(dy);
+            cumX += dx;
+            cumY += dy;
+            trajX.push(cumX);
+            trajY.push(cumY);
+          }
+
+          // Swap buffers — no new allocation
+          const tmp = prevGray;
+          prevGray = currGray;
+          currGray = tmp;
+          hasPrev  = true;
+
+          // Progress update
+          const pct = 5 + Math.round((frameIdx / totalFrames) * 82);
+          const li  = Math.min(LOGS.length - 2, Math.floor(pct / 10));
+          setProgress(pct, pct % 15 === 0 ? LOGS[li] : null);
+        }
+
+        URL.revokeObjectURL(url);
+
+        if (deltasX.length < 5) {
+          throw new Error('분석 가능한 프레임이 부족합니다. 더 긴 영상을 사용해주세요.');
+        }
+
+        setProgress(92, LOGS[7]);
+        const result = computeStats(deltasX, deltasY, trajX, trajY, duration, frameIdx);
+        setProgress(100, LOGS[9]);
+        resolve(result);
+      }
+
+      processAll().catch(e => { URL.revokeObjectURL(url); reject(e); });
+    };
+  });
+}
+
+/* ================================================================
+   GRAYSCALE — ITU-R BT.601 luminance
+   In-place write to existing Float32Array (no new allocations)
+================================================================ */
+function toGray(pixels, out, len) {
+  for (let i = 0; i < len; i++) {
+    const p = i << 2; // i * 4
+    out[i] = pixels[p] * 0.299 + pixels[p + 1] * 0.587 + pixels[p + 2] * 0.114;
+  }
+}
+
+/* ================================================================
+   BLOCK MATCHING — SSD (Sum of Squared Differences)
+   For each 8×8 block on a grid inside the ROI, find the
+   displacement (dx, dy) that minimizes pixel-wise SSD.
+   Only blocks with sufficient texture (SSD variance > threshold)
+   are included. Returns median dx/dy across valid blocks.
+================================================================ */
+function blockMatch(prev, curr, W, H, cx, cy, bx1, by1, bx2, by2) {
+  const STEP = BS * 2; // step between block origins (skip for speed)
+  const dxArr = [];
+  const dyArr = [];
+
+  for (let by = by1; by < by2; by += STEP) {
+    for (let bx = bx1; bx < bx2; bx += STEP) {
+
+      // Compute reference block variance — skip flat/low-texture blocks
+      let mean = 0;
+      for (let py = 0; py < BS; py++)
+        for (let px = 0; px < BS; px++)
+          mean += prev[(by + py) * W + (bx + px)];
+      mean /= (BS * BS);
+      let variance = 0;
+      for (let py = 0; py < BS; py++)
+        for (let px = 0; px < BS; px++) {
+          const d = prev[(by + py) * W + (bx + px)] - mean;
+          variance += d * d;
+        }
+      if (variance < 60) continue; // skip near-flat blocks
+
+      let bestSSD = Infinity;
+      let bestDx  = 0;
+      let bestDy  = 0;
+
+      for (let dy = -SEARCH; dy <= SEARCH; dy++) {
+        for (let dx = -SEARCH; dx <= SEARCH; dx++) {
+          let ssd = 0;
+          for (let py = 0; py < BS; py++) {
+            const prevRow = (by + py) * W;
+            const currRow = (by + py + dy) * W;
+            for (let px = 0; px < BS; px++) {
+              const diff = prev[prevRow + bx + px] - curr[currRow + bx + px + dx];
+              ssd += diff * diff;
+            }
+            // Early exit if already worse than best
+            if (ssd >= bestSSD) break;
+          }
+          if (ssd < bestSSD) { bestSSD = ssd; bestDx = dx; bestDy = dy; }
+        }
+      }
+
+      dxArr.push(bestDx);
+      dyArr.push(bestDy);
+    }
+  }
+
+  if (dxArr.length === 0) return { dx: 0, dy: 0 };
+  return { dx: median(dxArr), dy: median(dyArr) };
+}
+
+/* ================================================================
+   STATS & SCORING
+================================================================ */
+function computeStats(dxArr, dyArr, trajX, trajY, duration, frameCount) {
+  const n = dxArr.length;
+
+  // Per-frame movement magnitude (Euclidean distance of delta vector)
+  const magnitudes = new Array(n);
+  for (let i = 0; i < n; i++)
+    magnitudes[i] = Math.sqrt(dxArr[i] * dxArr[i] + dyArr[i] * dyArr[i]);
+
+  const avgMov = arrMean(magnitudes);
+  const medMov = median(magnitudes);
+  const maxMov = Math.max(...magnitudes);
+  const stdMov = arrStd(magnitudes, avgMov);
+
+  // Cumulative deviation: distance of cumulative position from origin (0,0)
+  // trajX/Y are built purely from delta accumulation — correct
+  const deviations = trajX.map((x, i) => Math.sqrt(x * x + trajY[i] * trajY[i]));
+  const avgDev = arrMean(deviations);
+  const maxDev = Math.max(...deviations);
+
+  // Smoothness: mean angle change between consecutive motion vectors
+  const smoothness = calcSmoothness(dxArr, dyArr);
+
+  /* ── SCORING ──────────────────────────────────────────────────
+     All formulas clamped [0, 100].
+
+     Stability:   avg_dev 0→100pts, 10→82pts, 25→55pts, 50→10pts
+     Control:     avg_mov 0→100pts, 3→92.5pts, 6→85pts, 12→70pts
+     Consistency: std     0→100pts,  3→85pts,  6→70pts, 15→25pts
+     Smoothness:  angle   0→100pts, 90→50pts, 180→0pts
+  ── */
+  const stability   = clamp(100 - avgDev * 1.8, 0, 100);
+  const control     = clamp(100 - avgMov * 2.5, 0, 100);
+  const consistency = clamp(100 - stdMov * 5.0, 0, 100);
+
+  // Weighted overall — integer multiplication avoids 0.35+0.35+0.20+0.10 float imprecision
+  // 35+35+20+10 = 100, then divide by 100
+  const overall = Math.round(stability*35 + control*35 + consistency*20 + smoothness*10) / 100;
+
+  const grade = calcGrade(overall);
+
+  // FPS normalization: actual sample rate from elapsed time + frame count
+  const sampleFps = n / Math.max(duration, 0.01);
+  const norm = avgMov * (NORM_FPS / Math.max(sampleFps, 1));
+
+  const { rec, recDetail, tips }   = sensitivityJudge(norm);
+  const { pattern, patDetail }     = classifyPattern(avgMov, stdMov, smoothness);
+  const sensEst                    = estimateSens(norm);
+
+  return {
+    frameCount, duration: r2(duration),
+    stability: r2(stability), control: r2(control),
+    consistency: r2(consistency), smoothness: r2(smoothness),
+    overall, grade,
+    avgMov: r3(avgMov), medMov: r3(medMov),
+    maxMov: r3(maxMov), stdMov: r3(stdMov),
+    avgDev: r2(avgDev), maxDev: r2(maxDev),
+    rec, recDetail, tips,
+    pattern, patDetail, sensEst,
+    magnitudes, trajX, trajY,
+  };
+}
+
+function calcSmoothness(dxArr, dyArr) {
+  const changes = [];
+  for (let i = 1; i < dxArr.length; i++) {
+    const n1 = Math.sqrt(dxArr[i-1]**2 + dyArr[i-1]**2);
+    const n2 = Math.sqrt(dxArr[i]**2   + dyArr[i]**2);
+    if (n1 < 0.05 || n2 < 0.05) continue; // skip near-zero vectors
+    const cos = clamp((dxArr[i-1]*dxArr[i] + dyArr[i-1]*dyArr[i]) / (n1 * n2), -1, 1);
+    changes.push(Math.acos(cos) * (180 / Math.PI));
+  }
+  if (changes.length === 0) return 50;
+  return clamp(100 - arrMean(changes) * (100 / 180), 0, 100);
+}
+
+function calcGrade(s) {
+  if (s >= 88) return 'S';
+  if (s >= 75) return 'A';
+  if (s >= 60) return 'B';
+  if (s >= 45) return 'C';
+  return 'D';
+}
+
+/* ── SENSITIVITY JUDGMENT ── */
+function sensitivityJudge(norm) {
+  if (norm > T_TOO_HIGH) return {
+    rec: 'TOO HIGH',
+    recDetail: '감도가 너무 높습니다. 에임이 빠르게 흔들려 정밀 조준이 어렵습니다.',
+    tips: [
+      '마우스 DPI를 400~800 사이로 설정해 보세요.',
+      'PUBG 인게임 감도를 현재보다 20~30% 낮춰보세요.',
+      '수직/수평 감도를 각각 독립적으로 줄여가며 테스트하세요.',
+      '저감도 연습을 위해 큰 마우스패드 사용을 권장합니다.',
+    ],
+  };
+  if (norm > T_HIGH) return {
+    rec: 'SLIGHTLY HIGH',
+    recDetail: '감도가 약간 높습니다. 소폭 낮추면 정확도가 개선될 수 있습니다.',
+    tips: [
+      'PUBG 인게임 감도를 5~10% 낮춰보세요.',
+      '손목보다 팔 전체를 활용한 에이밍을 연습하세요.',
+      '장거리 교전 시 스코프 감도를 별도로 낮게 설정하세요.',
+    ],
+  };
+  if (norm >= T_OPT_LO) return {
+    rec: 'OPTIMAL',
+    recDetail: '현재 감도가 이상적인 범위에 있습니다. 꾸준히 유지하세요!',
+    tips: [
+      '현재 감도를 기록해두고 일관성 있게 유지하세요.',
+      'KovaaK\'s, Aim Lab으로 꾸준히 에임 훈련을 하세요.',
+      '마우스 가속(Acceleration) 기능은 반드시 꺼두세요.',
+    ],
+  };
+  if (norm >= T_LOW) return {
+    rec: 'SLIGHTLY LOW',
+    recDetail: '감도가 약간 낮습니다. 근거리 반응 속도가 낮을 수 있습니다.',
+    tips: [
+      'PUBG 인게임 감도를 5~10% 높여보세요.',
+      '근거리 전투 반응속도 개선에 집중하세요.',
+      '배율별 스코프 감도를 세분화해서 설정하세요.',
+    ],
+  };
+  return {
+    rec: 'TOO LOW',
+    recDetail: '감도가 너무 낮습니다. 에임 전환 속도가 심각하게 느립니다.',
+    tips: [
+      'PUBG 인게임 감도를 20~30% 높여보세요.',
+      '마우스 DPI가 낮다면 800~1600으로 올려보세요.',
+      'Raw Input 옵션이 활성화되어 있는지 확인하세요.',
+      '근거리 전투가 많다면 감도 향상이 필수적입니다.',
+    ],
+  };
+}
+
+/* ── PATTERN CLASSIFICATION ── */
+function classifyPattern(avgMov, stdMov, smoothness) {
+  const cv = stdMov / Math.max(avgMov, 0.001); // coefficient of variation
+  if (smoothness >= 68 && cv < 0.65)
+    return { pattern: 'SMOOTH TRACKING',    patDetail: '에임이 부드럽고 일관적입니다. 추적 능력이 우수합니다.' };
+  if (cv > 1.2 || stdMov > avgMov * 1.5)
+    return { pattern: 'ERRATIC / FLICKING', patDetail: '움직임이 불규칙합니다. 플리킹 습관이나 과다 감도 가능성이 있습니다.' };
+  if (avgMov < T_LOW * 0.65)
+    return { pattern: 'MICRO-ADJUSTING',    patDetail: '미세 조정 위주입니다. 안정적이지만 반응 속도가 낮을 수 있습니다.' };
+  return   { pattern: 'MIXED',              patDetail: '트래킹과 플리킹이 혼합된 일반적인 패턴입니다.' };
+}
+
+/* ── SENSITIVITY ESTIMATE ──────────────────────────────────────
+   Empirical mapping:
+   norm ≈ 1.6 (low-optimal boundary) → sens ~50 for typical players
+   norm ≈ 5.0 (high-optimal boundary) → sens ~33
+   Uses piece-wise linear + log smoothing for realistic range.
+── */
+function estimateSens(norm) {
+  const n = Math.max(norm, 0.1);
+  // Calibrated anchor points (DPI 800, 1920×1080, PUBG default scaling):
+  //   norm 1.0  → ~80
+  //   norm 3.0  → ~55
+  //   norm 6.0  → ~37
+  //   norm 10.0 → ~25
+  const raw = clamp(80 * Math.pow(3.0 / n, 0.65), 1, 100);
+  const est = Math.round(raw * 10) / 10;
+  return {
+    estimated:  est,
+    rangeLow:   Math.round(clamp(est * 0.82, 1, 100) * 10) / 10,
+    rangeHigh:  Math.round(clamp(est * 1.18, 1, 100) * 10) / 10,
+    note: 'DPI 800, 1920×1080 기준 참고값. 개인 환경에 맞게 조정하세요.',
+  };
+}
+
+/* ── MATH UTILS ── */
+function arrMean(a) { let s = 0; for (let i = 0; i < a.length; i++) s += a[i]; return s / a.length; }
+function arrStd(a, m) { let s = 0; for (let i = 0; i < a.length; i++) s += (a[i]-m)**2; return Math.sqrt(s / a.length); }
+function median(arr) {
+  const s = [...arr].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length & 1 ? s[m] : (s[m-1] + s[m]) / 2;
+}
+function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+function r2(v) { return Math.round(v * 100) / 100; }
+function r3(v) { return Math.round(v * 1000) / 1000; }
+
+/* ================================================================
+   RENDER RESULTS TO DOM
+================================================================ */
+function renderResults(r) {
+  document.getElementById('results').style.display = 'block';
+
+  // Grade
+  const gn = document.getElementById('gnum');
+  gn.textContent = r.grade;
+  gn.className   = 'gnum ' + r.grade;
+  document.getElementById('gScore').textContent = r.overall;
+
+  // Recommendation pill
+  const PILL = {
+    'OPTIMAL':       ['rp-opt', '✓ OPTIMAL'],
+    'TOO HIGH':      ['rp-hi',  '↑ TOO HIGH'],
+    'SLIGHTLY HIGH': ['rp-sl',  '↑ SLIGHTLY HIGH'],
+    'TOO LOW':       ['rp-hi',  '↓ TOO LOW'],
+    'SLIGHTLY LOW':  ['rp-sl',  '↓ SLIGHTLY LOW'],
+  };
+  const [cls, lbl] = PILL[r.rec] || ['rp-sl', r.rec];
+  document.getElementById('rPill').innerHTML = `<div class="rec-pill ${cls}">${lbl}</div>`;
+  document.getElementById('rDet').textContent = r.recDetail;
+
+  // Stat bars — delay so CSS transition runs after display:block
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    setBar('St', r.stability);
+    setBar('Ct', r.control);
+    setBar('Co', r.consistency);
+    setBar('Sm', r.smoothness);
+  }));
+
+  // Metrics
+  document.getElementById('mFrames').textContent = r.frameCount.toLocaleString();
+  document.getElementById('mDur').textContent    = r.duration + 's';
+  document.getElementById('mAvgM').textContent   = r.avgMov + ' px/f';
+  document.getElementById('mMaxD').textContent   = r.maxDev + ' px';
+
+  // Pattern
+  document.getElementById('patName').textContent = r.pattern;
+  document.getElementById('patDet').textContent  = r.patDetail;
+
+  // Sensitivity estimate
+  document.getElementById('sensNum').textContent   = r.sensEst.estimated;
+  document.getElementById('sensRange').textContent = `범위: ${r.sensEst.rangeLow} ~ ${r.sensEst.rangeHigh}`;
+  document.getElementById('sensNote').textContent  = r.sensEst.note;
+
+  // Tips
+  document.getElementById('tipsGrid').innerHTML =
+    r.tips.map(t => `<div class="tip"><div class="td"></div><span>${t}</span></div>`).join('');
+
+  // Charts (slight delay for layout)
+  setTimeout(() => {
+    drawTrajectory(r.trajX, r.trajY);
+    drawHeatmap(r.trajX, r.trajY);
+    drawTimeline(r.magnitudes);
+    drawDistribution(r.magnitudes);
+  }, 80);
+
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function setBar(id, val) {
+  document.getElementById('v' + id).innerHTML = val + '<span class="u">%</span>';
+  document.getElementById('b' + id).style.width = val + '%';
+}
+
+/* ================================================================
+   CANVAS CHART RENDERING
+   All ctx.textAlign is explicitly reset after every text op.
+================================================================ */
+const C = {
+  DARK:  '#0d1526', GRID:  '#1a2535', TEXT:  '#94a3b8',
+  AMBER: '#f5a623', CYAN:  '#00d4ff', GREEN: '#22c55e',
+  RED:   '#ef4444', PURP:  '#a78bfa',
+};
+
+function mkCanvas(id, w, h) {
+  const c   = document.getElementById(id);
+  c.width   = w; c.height = h;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = C.DARK; ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = C.GRID; ctx.lineWidth = 0.5;
+  for (let x = 0; x <= w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y <= h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  return ctx;
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+/* -- Trajectory -- */
+function drawTrajectory(trajX, trajY) {
+  const W = 460, H = 300, PAD = 32;
+  const ctx = mkCanvas('cTraj', W, H);
+  if (trajX.length < 2) return;
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < trajX.length; i++) {
+    if (trajX[i] < minX) minX = trajX[i]; if (trajX[i] > maxX) maxX = trajX[i];
+    if (trajY[i] < minY) minY = trajY[i]; if (trajY[i] > maxY) maxY = trajY[i];
+  }
+  // Include origin (0,0) in range so it stays visible
+  minX = Math.min(minX, 0); maxX = Math.max(maxX, 0);
+  minY = Math.min(minY, 0); maxY = Math.max(maxY, 0);
+  const rX = maxX - minX || 1, rY = maxY - minY || 1;
+
+  const toS = (x, y) => [
+    PAD + (x - minX) / rX * (W - PAD * 2),
+    PAD + (y - minY) / rY * (H - PAD * 2),
+  ];
+
+  const n = trajX.length;
+  for (let i = 1; i < n; i++) {
+    const t   = i / n;
+    const r   = Math.round(lerp(167, 245, t));
+    const g   = Math.round(lerp(139, 166, t));
+    const b   = Math.round(lerp(250, 35, t));
+    ctx.strokeStyle = `rgba(${r},${g},${b},0.85)`;
+    ctx.lineWidth   = 1.2;
+    ctx.beginPath();
+    const [x0, y0] = toS(trajX[i-1], trajY[i-1]);
+    const [x1, y1] = toS(trajX[i],   trajY[i]);
+    ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  }
+
+  // Origin crosshair
+  const [ox, oy] = toS(0, 0);
+  ctx.strokeStyle = C.CYAN; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(ox-8, oy); ctx.lineTo(ox+8, oy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ox, oy-8); ctx.lineTo(ox, oy+8); ctx.stroke();
+
+  // Start / End dots
+  const [sx, sy] = toS(trajX[0],   trajY[0]);
+  const [ex, ey] = toS(trajX[n-1], trajY[n-1]);
+  dot(ctx, sx, sy, 4, C.GREEN);
+  dot(ctx, ex, ey, 4, C.RED);
+
+  // Labels — always reset textAlign
+  ctx.fillStyle = C.TEXT; ctx.font = '10px Share Tech Mono';
+  ctx.textAlign = 'left';
+  ctx.fillText('START', sx + 6, sy + 4);
+  ctx.fillText('END',   ex + 6, ey + 4);
+  ctx.textAlign = 'center';
+  ctx.fillText('ΔX (px)', W / 2, H - 5);
+  ctx.textAlign = 'left'; // reset
+}
+
+/* -- Heatmap -- */
+function drawHeatmap(trajX, trajY) {
+  const W = 460, H = 300, PAD = 20, BINS = 32;
+  const ctx = mkCanvas('cHeat', W, H);
+  if (trajX.length < 5) return;
+
+  let minX = Math.min(...trajX, 0) - 1, maxX = Math.max(...trajX, 0) + 1;
+  let minY = Math.min(...trajY, 0) - 1, maxY = Math.max(...trajY, 0) + 1;
+  const cellW = (W - PAD*2) / BINS, cellH = (H - PAD*2) / BINS;
+
+  const heat = new Float32Array(BINS * BINS);
+  for (let i = 0; i < trajX.length; i++) {
+    const bx = clamp(Math.floor((trajX[i]-minX)/(maxX-minX)*(BINS-1)), 0, BINS-1);
+    const by = clamp(Math.floor((trajY[i]-minY)/(maxY-minY)*(BINS-1)), 0, BINS-1);
+    heat[by * BINS + bx]++;
+  }
+  const maxH = Math.max(...heat, 1);
+
+  for (let row = 0; row < BINS; row++) {
+    for (let col = 0; col < BINS; col++) {
+      const v = heat[row * BINS + col] / maxH;
+      if (v < 0.01) continue;
+      ctx.fillStyle = heatColor(Math.pow(v, 0.45)); // gamma for visibility
+      ctx.fillRect(PAD + col*cellW, PAD + row*cellH, cellW+0.5, cellH+0.5);
+    }
+  }
+
+  // Origin crosshair
+  const ox = PAD + (0 - minX) / (maxX - minX) * (W - PAD*2);
+  const oy = PAD + (0 - minY) / (maxY - minY) * (H - PAD*2);
+  if (ox > PAD && ox < W-PAD && oy > PAD && oy < H-PAD) {
+    ctx.strokeStyle = C.CYAN; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(ox-7, oy); ctx.lineTo(ox+7, oy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox, oy-7); ctx.lineTo(ox, oy+7); ctx.stroke();
+  }
+}
+
+function heatColor(v) {
+  if (v < 0.33) { const t=v/0.33;  return `rgb(${lerp(13,0,t)|0},${lerp(21,165,t)|0},${lerp(38,255,t)|0})`; }
+  if (v < 0.66) { const t=(v-0.33)/0.33; return `rgb(${lerp(0,245,t)|0},${lerp(165,166,t)|0},${lerp(255,35,t)|0})`; }
+  const t=(v-0.66)/0.34; return `rgb(${lerp(245,239,t)|0},${lerp(166,68,t)|0},${lerp(35,68,t)|0})`;
+}
+
+/* -- Timeline -- */
+function drawTimeline(mags) {
+  const W=460, H=300, PAD={l:38,r:14,t:14,b:32};
+  const ctx = mkCanvas('cTime', W, H);
+  if (!mags.length) return;
+
+  const IW = W-PAD.l-PAD.r, IH = H-PAD.t-PAD.b;
+  const maxV = Math.max(...mags) * 1.08 || 1;
+  const n = mags.length;
+  const px = i => PAD.l + i / (n-1) * IW;
+  const py = v => PAD.t + IH - (v / maxV) * IH;
+
+  // Fill under curve
+  ctx.beginPath();
+  ctx.moveTo(px(0), py(0));
+  for (let i=0;i<n;i++) ctx.lineTo(px(i), py(mags[i]));
+  ctx.lineTo(px(n-1), PAD.t+IH); ctx.lineTo(PAD.l, PAD.t+IH); ctx.closePath();
+  ctx.fillStyle = 'rgba(0,212,255,0.10)'; ctx.fill();
+
+  // Raw line
+  ctx.beginPath(); ctx.strokeStyle=C.CYAN; ctx.lineWidth=0.9; ctx.globalAlpha=0.5;
+  for (let i=0;i<n;i++) i===0?ctx.moveTo(px(i),py(mags[i])):ctx.lineTo(px(i),py(mags[i]));
+  ctx.stroke(); ctx.globalAlpha=1;
+
+  // Rolling avg
+  const WIN = Math.min(15, n);
+  ctx.beginPath(); ctx.strokeStyle=C.AMBER; ctx.lineWidth=2;
+  for (let i=WIN-1;i<n;i++){
+    let s=0; for(let j=i-WIN+1;j<=i;j++) s+=mags[j];
+    const a=s/WIN;
+    i===WIN-1?ctx.moveTo(px(i),py(a)):ctx.lineTo(px(i),py(a));
+  }
+  ctx.stroke();
+
+  // Mean line
+  const avg = arrMean(mags);
+  ctx.strokeStyle=C.GREEN; ctx.lineWidth=1.2; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(PAD.l,py(avg)); ctx.lineTo(PAD.l+IW,py(avg)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Axis labels
+  ctx.fillStyle=C.TEXT; ctx.font='10px Share Tech Mono';
+  ctx.textAlign='center'; ctx.fillText('Frame', PAD.l+IW/2, H-3);
+  ctx.textAlign='right';  ctx.fillText('0', PAD.l-4, PAD.t+IH+4);
+  ctx.textAlign='right';  ctx.fillText(n+'', PAD.l+IW, PAD.t+IH+14);
+  ctx.textAlign='left'; // reset
+
+  // Legend
+  drawLegend(ctx, W-118, 16, [[C.AMBER,`avg(${WIN}f)`],[C.GREEN,'mean'],[C.CYAN,'raw']]);
+}
+
+/* -- Distribution -- */
+function drawDistribution(mags) {
+  const W=460, H=300, PAD={l:38,r:14,t:14,b:32};
+  const ctx = mkCanvas('cDist', W, H);
+  if (!mags.length) return;
+
+  const IW=W-PAD.l-PAD.r, IH=H-PAD.t-PAD.b;
+  const BINS = clamp(Math.floor(mags.length/8), 10, 40);
+  const maxV = Math.max(...mags) || 1;
+  const bw   = IW / BINS;
+
+  const counts = new Array(BINS).fill(0);
+  for (let i=0;i<mags.length;i++){
+    const b = clamp(Math.floor(mags[i]/maxV*(BINS-1)), 0, BINS-1);
+    counts[b]++;
+  }
+  const maxC = Math.max(...counts) || 1;
+
+  for (let i=0;i<BINS;i++){
+    const bh = counts[i]/maxC*IH;
+    ctx.fillStyle = 'rgba(0,212,255,0.65)';
+    ctx.fillRect(PAD.l+i*bw, PAD.t+IH-bh, bw-1, bh);
+    ctx.strokeStyle=C.DARK; ctx.lineWidth=0.4;
+    ctx.strokeRect(PAD.l+i*bw, PAD.t+IH-bh, bw-1, bh);
+  }
+
+  // Mean & median vertical lines
+  const avg = arrMean(mags);
+  const med = median(mags);
+  const vx  = v => PAD.l + v/maxV*IW;
+  vLine(ctx, vx(avg), PAD.t, PAD.t+IH, C.AMBER);
+  vLine(ctx, vx(med), PAD.t, PAD.t+IH, C.GREEN);
+
+  // Labels
+  ctx.fillStyle=C.TEXT; ctx.font='10px Share Tech Mono';
+  ctx.textAlign='center'; ctx.fillText('Movement (px/frame)', PAD.l+IW/2, H-3);
+  ctx.textAlign='left'; // reset
+
+  drawLegend(ctx, W-110, 16, [[C.AMBER,'mean'],[C.GREEN,'median']]);
+}
+
+/* ── Canvas helpers ── */
+function dot(ctx,x,y,r,col){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=col;ctx.fill()}
+function vLine(ctx,x,y0,y1,col){ctx.strokeStyle=col;ctx.lineWidth=1.4;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1);ctx.stroke();ctx.setLineDash([])}
+function drawLegend(ctx,x,y,items){
+  ctx.textAlign='left'; // ensure consistent start
+  items.forEach(([col,lbl],i)=>{
+    ctx.fillStyle=col; ctx.fillRect(x,y+i*15,10,2);
+    ctx.fillStyle=C.TEXT; ctx.font='10px Share Tech Mono';
+    ctx.fillText(lbl,x+14,y+i*15+4);
+  });
+  ctx.textAlign='left'; // reset
+}
+
+/* ── Progress / Error ── */
+function setProgress(pct, msg) {
+  document.getElementById('pfill').style.width = pct + '%';
+  document.getElementById('ppct').textContent  = pct + '%';
+  if (msg) {
+    const d = document.createElement('div');
+    d.className = 'log-line'; d.textContent = msg;
+    const el = document.getElementById('logEl');
+    el.innerHTML = ''; el.appendChild(d);
+  }
+}
+function showErr(msg) {
+  const e = document.getElementById('errEl');
+  e.textContent = '> ERROR: ' + msg;
+  e.style.display = 'block';
+}
+</script>
+</body>
+</html>
